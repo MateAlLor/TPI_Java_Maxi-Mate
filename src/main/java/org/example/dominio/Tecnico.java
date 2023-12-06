@@ -64,14 +64,6 @@ public class Tecnico implements Serializable, Notificador{
         incidente.cerrarIncidente();
     }
 
-    public void darDeAltaPorServicioYProblema(Servicio servicio, TipoProblema tipoProblema){
-        for(Incidente inc : servicio.incidentes){
-            if (inc.tipoProblema.equals(tipoProblema)){
-                marcarIncidenteTerminado(inc);
-            }
-        }
-    }
-
     public Double promedioTiempoIncidentes(){
         List<Incidente> incidentesResueltos = this.getIncidentes().stream()
                 .filter(incidente -> incidente.estadoIncidente.equals(Estado.Cerrado)).toList();

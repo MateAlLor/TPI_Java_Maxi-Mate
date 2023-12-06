@@ -6,18 +6,15 @@ import org.example.repositorios.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class MenuOpciones {
 
     ClienteRespositorio repoCliente = new ClienteRespositorio();
     EspecialidadRepositorio repoEspecialidad = new EspecialidadRepositorio();
-    EstimadoPorProblemaRepositorio repoEstimadoxProblema= new EstimadoPorProblemaRepositorio();
     IncidenteRepositorio repoIncidente = new IncidenteRepositorio();
     ServicioRepositorio repoServicio = new ServicioRepositorio();
     TecnicoRepositorio repoTecnico = new TecnicoRepositorio();
     TipoProblemaRepositorio repoTipoProblema = new TipoProblemaRepositorio();
-    Scanner scanner = new Scanner(System.in);
 
     public void start() {
         Scanner scanner = new Scanner(System.in);
@@ -27,7 +24,9 @@ public class MenuOpciones {
                     "╔═══════════════════════════════════════════════════╗\n" +
                     "║              Menú de Opciones                     ║\n" +
                     "╠═══════════════════════════════════════════════════╣\n" +
-                    "║         Generar clases necesarias                 ║\n" +
+                    "║0-Generar Instancias de Prueba                     ║\n" +
+                    "╠═══════════════════════════════════════════════════╣\n" +
+                    "║           Generar clases necesarias               ║\n" +
                     "║1-Añadir Servicio                                  ║\n" +
                     "║2-Añadir Especialidad                              ║\n" +
                     "║3-Añadir Cliente                                   ║\n" +
@@ -46,6 +45,7 @@ public class MenuOpciones {
                     "║12-Técnico con más incidentes resueltos en 'n' días║\n" +
                     "║13-Anterior pero filtrado por especialidad         ║\n" +
                     "║14-Técnico más rápido                              ║\n" +
+                    "║15-Asignar tiempo de resolucion a Tipo de Problema ║\n" +
                     "╠═══════════════════════════════════════════════════╣\n" +
                     "║(-1)-Salir                                         ║\n" +
                     "╚═══════════════════════════════════════════════════╝\n" +
@@ -54,6 +54,10 @@ public class MenuOpciones {
             opcion = scanner.nextInt(); scanner.nextLine();
             System.out.println("La opción ingresada es: " + opcion);
             switch (opcion) {
+                case 0:
+                    GeneradorDeInstancias generador = new GeneradorDeInstancias();
+                    generador.generarInstancias();
+                    break;
                 case 1:
                     this.anadirServicio(scanner);
                     break;
@@ -85,7 +89,7 @@ public class MenuOpciones {
                     repoTecnico.mostrarTecnicosEIncidentes();
                     break;
                 case 11:
-                    // AGREGAR
+                    this.darDeAltaIncidentesGrupo(scanner);
                     break;
                 case 12:
                     this.tecnicoMasIncidentesNDias(scanner);
@@ -96,7 +100,12 @@ public class MenuOpciones {
                 case 14:
                     repoTecnico.tecnicoMasRapido();
                     break;
-
+                case 15:
+                    this.addHorasEstimadasTipoProblema(scanner);
+                    break;
+                default:
+                    System.out.println("Ingrese una opción válida");
+                    break;
             }
         }
         scanner.close();
@@ -168,20 +177,24 @@ public class MenuOpciones {
         System.out.println("Ingrese una descripcion: ");
         String descripcion = scanner.nextLine();
         System.out.println("El problema es complejo?: 0=No, 1=Si");
-        int opcion = scanner.nextInt();
+        int opcion = scanner.nextInt(); scanner.nextLine();
         while(opcion != 0 && opcion != 1){
             System.out.println("Ingrese una opción válida");
-            opcion = scanner.nextInt();
+            opcion = scanner.nextInt(); scanner.nextLine();
         }
         scanner.nextLine();
-        Boolean complejo = null;
+        Boolean complejo;
         if (opcion==1){
             complejo = Boolean.TRUE;
         }else{
             complejo = Boolean.FALSE;
         }
 
-        TipoProblema newTipoProblema = new TipoProblema(nombre, descripcion, complejo);
+        System.out.println("Ingrese una cantidad de horas estimadas");
+        Integer horasEstimadas = scanner.nextInt(); scanner.nextLine();
+
+
+        TipoProblema newTipoProblema = new TipoProblema(nombre, descripcion, complejo, horasEstimadas);
         repoTipoProblema.guardarTipoProblema(newTipoProblema);
     }
 
@@ -202,7 +215,7 @@ public class MenuOpciones {
             opcion = scanner.nextInt();
         }
         scanner.nextLine();
-        MedioContacto medioContacto = null;
+        MedioContacto medioContacto;
         if (opcion==1){
             medioContacto = MedioContacto.Whatsapp;
         }else{
@@ -381,6 +394,41 @@ public class MenuOpciones {
         Especialidad especialidad = especialidadList.get(indexEsp);
 
         repoTecnico.tecnicoMasIncidentesDeEspecialidad(ndias, especialidad);
+
+    }
+
+    private void darDeAltaIncidentesGrupo(Scanner scanner){
+        List<Servicio> servicioList = repoServicio.getServicio();
+        List<TipoProblema> tipoProblemaList = repoTipoProblema.getTipoProblema();
+        List<Incidente> incidentesLista = repoIncidente.getIncidentes();
+
+        System.out.println("Ingrese de cuál servicio son los incidentes");
+        this.mostrarServicios(servicioList);
+        Integer indexServicio = this.seleccionarOpcion(scanner, servicioList.size());
+        Servicio servicio = servicioList.get(indexServicio);
+
+        System.out.println("Ingrese el tipo de problema a filtrar");
+        this.mostrarTipoProblemas(tipoProblemaList);
+        Integer indexTipoProblema = this.seleccionarOpcion(scanner, tipoProblemaList.size());
+        TipoProblema tipoProblema = tipoProblemaList.get(indexTipoProblema);
+
+        servicio.darDeAltaPorServicioYProblema(tipoProblema);
+        incidentesLista.forEach(incidente -> repoIncidente.actualizarIncidente(incidente));
+
+    }
+
+    private void addHorasEstimadasTipoProblema(Scanner scanner){
+        List<TipoProblema> tipoProblemaList = repoTipoProblema.getTipoProblema();
+        System.out.println("Ingrese el tipo de problema a filtrar");
+        this.mostrarTipoProblemas(tipoProblemaList);
+        Integer indexTipoProblema = this.seleccionarOpcion(scanner, tipoProblemaList.size());
+        TipoProblema tipoProblema = tipoProblemaList.get(indexTipoProblema);
+
+        System.out.println("Ingrese una cantidad de horas: ");
+        Integer horas = scanner.nextInt(); scanner.nextLine();
+
+        tipoProblema.asignarHorasEstimadas(horas);
+        repoTipoProblema.actualizarTipoProblema(tipoProblema);
 
     }
 

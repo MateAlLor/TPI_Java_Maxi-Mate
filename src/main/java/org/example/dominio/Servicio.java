@@ -33,4 +33,13 @@ public class Servicio implements Serializable {
         this.incidentes.add(incidente);
     }
 
+    public void darDeAltaPorServicioYProblema(TipoProblema tipoProblema){
+        List<Incidente> incidentesACerrar = this.incidentes.stream().filter(incidente -> incidente.getEstadoIncidente().equals(Estado.Abierto)
+                &&
+                incidente.getTipoProblema().equals(tipoProblema)
+                ).toList();
+
+        incidentesACerrar.forEach(Incidente::cerrarIncidente);
+    }
+
 }
